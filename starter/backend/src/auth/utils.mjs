@@ -1,4 +1,5 @@
-import { decode } from 'jsonwebtoken'
+// import { decode } from 'jsonwebtoken'
+import jsonwebtoken from 'jsonwebtoken'
 import { createLogger } from '../utils/logger.mjs'
 
 const logger = createLogger('utils')
@@ -8,6 +9,8 @@ const logger = createLogger('utils')
  * @returns a user id from the JWT token
  */
 export function parseUserId(jwtToken) {
-  const decodedJwt = decode(jwtToken)
-  return decodedJwt.sub
+  console.log('---jwtToken---', jwtToken)
+  const decodedJwt = jsonwebtoken.decode(jwtToken, { complete: true })
+  console.log('---decodedJwt---', decodedJwt)
+  return decodedJwt.payload.sub
 }

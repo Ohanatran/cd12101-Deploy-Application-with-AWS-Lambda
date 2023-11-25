@@ -4,12 +4,13 @@ import { createLogger } from '../../utils/logger.mjs'
 
 const logger = createLogger('auth')
 
-const jwksUrl = 'https://test-endpoint.auth0.com/.well-known/jwks.json'
+const jwksUrl =
+  'https://dev-3zy73mrfubkqqmq3.us.auth0.com/.well-known/jwks.json'
 
 export async function handler(event) {
   try {
     const jwtToken = await verifyToken(event.authorizationToken)
-
+    logger.info('User was authorized', jwtToken)
     return {
       principalId: jwtToken.sub,
       policyDocument: {
@@ -43,11 +44,29 @@ export async function handler(event) {
 }
 
 async function verifyToken(authHeader) {
+  logger.info('Token', authHeader.substring(0, 20))
   const token = getToken(authHeader)
   const jwt = jsonwebtoken.decode(token, { complete: true })
 
   // TODO: Implement token verification
-  return undefined;
+  const res = await Axios.get(jwksUrl)
+  const { keys } = res.data
+  const signinKey = keys.find((key) => key.kid === jwt.header.kid)
+  logger.info('----signinkey---', signinKey)
+  if (!signinKey) {
+    throw new Error('SigninKey is invalid')
+  }
+  // got Data
+  const pemData = signinKey.x5c[0]
+  // convert to secret format
+  const secretKey = `-----BEGIN CERTIFICATE-----\n${pemData}\n-----END CERTIFICATE-----\n`
+  logger.info('-----secretKey----', secretKey)
+  // verify token
+  const tokenVerified = jsonwebtoken.verify(token, secretKey, {
+    algorithms: ['RS256']
+  })
+  logger.info('--tokenVerified--', tokenVerified)
+  return tokenVerified
 }
 
 function getToken(authHeader) {

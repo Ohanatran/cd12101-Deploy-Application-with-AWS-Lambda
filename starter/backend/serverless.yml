@@ -1,6 +1,6 @@
 app: serverless-todo-app-oanhtp
 service: serverless-todo-app-oanhtp
-frameworkVersion: '3.37.0'
+frameworkVersion: '3.38.0'
 
 plugins:
   - serverless-iam-roles-per-function
@@ -26,6 +26,22 @@ provider:
     SIGNED_URL_EXPIRATION: 300
     PROJECT_NAME: serverless-todo-app-oanhtp
     INDEX_NAME: ${self:provider.environment.TODOS_CREATED_AT_INDEX}
+
+custom:
+  documentation:
+    api:
+      info:
+        version: v1.0.0
+        title: Serverless Application Todo API
+        description: Serverless application for todos
+    models:
+      - name: CreateTodoRequest
+        contentType: application/json
+        schema: ${file(models/create-todo-model.json)}
+      - name: UpdateTodoRequest
+        contentType: application/json
+        schema: ${file(models/update-todo-model.json)}
+
 functions:
   Auth:
     handler: src/lambda/auth/auth0Authorizer.handler
@@ -50,11 +66,6 @@ functions:
         Action:
           - dynamodb:Query
         Resource: arn:aws:dynamodb:${self:provider.region}:407041924449:table/${self:provider.environment.TODOS_TABLE}/index/${self:provider.environment.TODOS_CREATED_AT_INDEX}
-      - Effect: Allow
-        Action:
-          - s3:PutObject
-          - s3:GetObject
-        Resource: arn:aws:s3:::${self:provider.environment.IMAGE_S3_BUCKET}/*
   # TODO: Configure this function
   CreateTodo:
     handler: src/lambda/http/createTodo.handler
@@ -68,17 +79,14 @@ functions:
           documentation:
             summary: Create a new todo job
             description: Allow user create a new todo job
+            requestModels:
+              'application/json': CreateTodoRequest
     # iam role
     iamRoleStatements:
       - Effect: 'Allow'
         Action:
           - dynamodb:PutItem
         Resource: !GetAtt TodosDynamoDBTable.Arn
-      - Effect: Allow
-        Action:
-          - s3:PutObject
-          - s3:GetObject
-        Resource: arn:aws:s3:::${self:provider.environment.IMAGE_S3_BUCKET}/*
 
   # TODO: Configure this function
   UpdateTodo:
@@ -93,6 +101,8 @@ functions:
           documentation:
             summary: Update a todo job
             description: Allow user update a todo job
+            requestModels:
+              'application/json': UpdateTodoRequest
     # iam roles
     iamRoleStatements:
       - Effect: 'Allow'
@@ -118,7 +128,7 @@ functions:
 
   # TODO: Configure this function
   GenerateUploadUrl:
-    handler: src/lambda/http/GenerateUploadUrl.handler
+    handler: src/lambda/http/generateUploadUrl.handler
     tracing: true
     events:
       - http:

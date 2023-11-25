@@ -1,8 +1,14 @@
+import middy from '@middy/core'
+import cors from '@middy/http-cors'
+import httpErrorHandler from '@middy/http-error-handler'
 import { createAttachmentUrl } from '../../businessLogic/todo.mjs'
-export async function handler(event) {
+import { getUserId } from '../utils.mjs'
+
+export const handler = middy(async (event) => {
   const todoId = event.pathParameters.todoId
-  // TODO: Return a presigned URL to upload a file for a TODO item with the provided id
-  const returnedUrl = await createAttachmentUrl(todoId)
+  const userId = getUserId(event)
+  console.log('userId: ', userId)
+  const returnUrl = await createAttachmentUrl(todoId, userId)
   return {
     statusCode: 201,
     headers: {
@@ -10,7 +16,13 @@ export async function handler(event) {
       'Access-Control-Allow-Credentials': true
     },
     body: JSON.stringify({
-      uploadUrl: returnedUrl
+      uploadUrl: returnUrl
     })
   }
-}
+})
+
+handler.use(httpErrorHandler()).use(
+  cors({
+    credentials: true
+  })
+)

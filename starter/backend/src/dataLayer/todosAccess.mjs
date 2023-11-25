@@ -43,50 +43,55 @@ export class TodosAccess {
   async createNewTodo(item) {
     console.log('---item--', item)
     const dynamoItem = marshall(item)
-    return await this.docClient.send(
+    await this.docClient.send(
       new PutItemCommand({
         TableName: this.todosTable,
         Item: dynamoItem
       })
     )
+    return dynamoItem
   }
 
   async updateTodo(todoId, userId, todoUpdate) {
+    console.log('==START UPDATE todo==', todoId)
     const result = await this.docClient.send(
       new UpdateItemCommand({
         TableName: this.todosTable,
         Key: {
-          todoId,
-          userId
+          todoId: { S: todoId },
+          userId: { S: userId }
         },
         UpdateExpression: 'set #name = :name, dueDate = :dueDate, done = :done',
         ExpressionAttributeNames: {
           '#name': 'name'
         },
         ExpressionAttributeValues: {
-          ':name': todoUpdate.name,
-          ':dueDate': todoUpdate.dueDate,
-          ':done': todoUpdate.done
+          ':name': { S: todoUpdate.name },
+          ':dueDate': { S: todoUpdate.dueDate },
+          ':done': { BOOL: todoUpdate.done }
         },
         ReturnValues: 'ALL_NEW'
       })
     )
     const itemUpdated = result.Attributes
+    console.log('==SUCCESS UPDATE todo==', itemUpdated)
     return itemUpdated
   }
 
   async deleteTodoJob(todoId, userId) {
     console.log('==todoId=', todoId)
     console.log('==userId=', userId)
+
     const result = await this.docClient.send(
       new DeleteItemCommand({
         TableName: this.todosTable,
         Key: {
-          todoId,
-          userId
+          todoId: { S: todoId },
+          userId: { S: userId }
         }
       })
     )
+    console.log('==SUCCESS DELETE==', todoId)
     logger.info('-----deleted todo item------', result)
     return todoId
   }

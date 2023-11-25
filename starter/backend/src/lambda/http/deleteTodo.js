@@ -1,9 +1,14 @@
-import { getUserId } from '../utils.mjs'
 import { deleteTodoJob } from '../../businessLogic/todo.mjs'
-export async function handler(event) {
-  const todoId = event.pathParameters.todoId
+import { getUserId } from '../utils.mjs'
 
+import middy from '@middy/core'
+import cors from '@middy/http-cors'
+import httpErrorHandler from '@middy/http-error-handler'
+
+export const handler = middy(async (event) => {
+  const todoId = event.pathParameters.todoId
   // TODO: Remove a TODO item by id
+
   const userId = getUserId(event)
   console.log('user id: ', userId)
   await deleteTodoJob(todoId, userId)
@@ -15,4 +20,10 @@ export async function handler(event) {
     },
     body: ''
   }
-}
+})
+
+handler.use(httpErrorHandler()).use(
+  cors({
+    credentials: true
+  })
+)

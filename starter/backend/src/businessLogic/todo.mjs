@@ -25,7 +25,7 @@ export async function createToDoJob(todo, userId) {
   return await todoAccessLayer.createNewTodo(todoBody)
 }
 
-export async function updateTodoJob(todoId, userId, todoUpdate) {
+export async function updateTodoJob(todoId, todoUpdate, userId) {
   logger.info('Update todo for user')
   return todoAccessLayer.updateTodo(todoId, userId, todoUpdate)
 }
@@ -34,6 +34,7 @@ export async function deleteTodoJob(todoId, userId) {
   return todoAccessLayer.deleteTodoJob(todoId, userId)
 }
 
-export async function createAttachmentUrl(todoId) {
+export async function createAttachmentUrl(todoId, userId) {
+  logger.info('Create attachment presigned url function by: ', userId, todoId)
   return s3Utils.getUploadUrl(todoId)
 }

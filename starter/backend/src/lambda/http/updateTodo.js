@@ -1,9 +1,11 @@
 import { getUserId } from '../utils.mjs'
+import middy from '@middy/core'
+import cors from '@middy/http-cors'
+import httpErrorHandler from '@middy/http-error-handler'
 import { updateTodoJob } from '../../businessLogic/todo.mjs'
-export async function handler(event) {
+export const handler = middy(async (event) => {
   const todoId = event.pathParameters.todoId
   const updatedTodo = JSON.parse(event.body)
-  // TODO: Update a TODO item with the provided id using values in the "updatedTodo" object
   const userId = getUserId(event)
   await updateTodoJob(todoId, updatedTodo, userId)
   return {
@@ -14,4 +16,10 @@ export async function handler(event) {
     },
     body: ''
   }
-}
+})
+
+handler.use(httpErrorHandler()).use(
+  cors({
+    credentials: true
+  })
+)
